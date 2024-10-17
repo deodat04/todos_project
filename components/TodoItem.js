@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Switch, TextInput, TouchableOpacity } from 'react-native';
 import { TrashIcon, PencilIcon, CheckIcon } from "react-native-heroicons/solid";
+import { launchImageLibrary } from 'react-native-image-picker';
 
 export default function TodoItem(props) {
     const [done, setIsEnabled] = useState(props.item.done);
     const [iconOpacity, setIconOpacity] = useState(1);
     const [editMode, setEditMode] = useState(false);
     const [editedContent, setEditedContent] = useState(props.item.content);
+    const [imageUri, setImageUri] = useState(null);
+
+    const selectImage = () => {
+        launchImageLibrary({}, response => {
+          if (!response.didCancel && !response.error) {
+            setImageUri(response.assets[0].uri);
+          }
+        });
+    };
 
     useEffect(() => {
         setIsEnabled(props.item.done);
@@ -53,6 +63,10 @@ export default function TodoItem(props) {
             <TouchableOpacity onPress={handleIconPress} style={{ opacity: iconOpacity }}>
                 <TrashIcon />
             </TouchableOpacity>
+            <TouchableOpacity onPress={selectImage}>
+                <Text>Add Image</Text>
+            </TouchableOpacity>
+            {imageUri && <Image source={{ uri: imageUri }} style={{ width: 100, height: 100 }} />}
         </View>
     );
 }

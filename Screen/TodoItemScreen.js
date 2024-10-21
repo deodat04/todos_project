@@ -3,6 +3,8 @@ import { StyleSheet, View, TextInput, Button, FlatList, Text, TouchableOpacity }
 import { TokenContext } from '../Context/Context';
 import { createTodo } from '../js/todo';
 import TodoItem from '../components/TodoItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function TodoItemScreen({ route, navigation }) {
     const { todoListId, todoListName } = route.params; 
@@ -11,28 +13,68 @@ export default function TodoItemScreen({ route, navigation }) {
     const [token] = useContext(TokenContext); 
     const [filter, setFilter] = useState('all');
 
-    const addNewToDo = async () => {
-        if (newTextToDo.trim()) {
-            try {
-                const newTodo = await createTodo(newTextToDo, todoListId, token); 
-                setTodos((prevTodos) => [...prevTodos, newTodo]); 
-                setNewTextToDo(''); 
-            } catch (error) {
-                console.log('Error adding todo:', error.message);
-            }
+    // Load todos for this specific todoList from AsyncStorage
+  useEffect(() => {
+    const loadTodos = async () => {
+      try {
+        const storedTodoLists = await AsyncStorage.getItem('todoLists');
+        if (storedTodoLists !== null) {
+          const todoLists = JSON.parse(storedTodoLists);
+          const currentList = todoLists.find(list => list.id === todoListId);
+          if (currentList) {
+            setTodos(currentList.todos);
+          }
         }
+      } catch (error) {
+        console.log("Error loading todos", error);
+      }
     };
+    loadTodos();
+  }, [todoListId]);
 
-    const deleteItem = (id) => {
-        setTodos((prevTodos) => prevTodos.filter(item => item.id !== id)); 
-    };
-
-    const editItem = (id, newContent) => {
-        setTodos((prevTodos) =>
-            prevTodos.map((item) =>
-                item.id === id ? { ...item, content: newContent } : item
-            )
+  const persistTodos = async (updatedTodos) => {
+    try {
+      const storedTodoLists = await AsyncStorage.getItem('todoLists');
+      if (storedTodoLists !== null) {
+        const todoLists = JSON.parse(storedTodoLists);
+        const updatedTodoLists = todoLists.map(list =>
+          list.id === todoListId ? { ...list, todos: updatedTodos } : list
         );
+        await AsyncStorage.setItem('todoLists', JSON.stringify(updatedTodoLists));
+      }
+    } catch (error) {
+      console.log("Error saving todos", error);
+    }
+  };
+  
+  const addNewToDo = async () => {
+    if (newTextToDo.trim()) {
+      try {
+        const newTodo = await createTodo(newTextToDo, todoListId, token);
+        const updatedTodos = [...todos, newTodo];
+        setTodos(updatedTodos);
+        setNewTextToDo('');
+        persistTodos(updatedTodos);
+      } catch (error) {
+        console.error('Error adding todo:', error.message);
+      }
+    }
+  };
+
+    // delete todo
+    const deleteItem = (id) => {
+        const updatedTodos = todos.filter(item => item.id !== id);
+        setTodos(updatedTodos);
+        persistTodos(updatedTodos);
+    };
+
+    // Modifier un ToDo
+    const editItem = (id, newContent) => {
+        const updatedTodos = todos.map(item =>
+        item.id === id ? { ...item, content: newContent } : item
+        );
+        setTodos(updatedTodos);
+        persistTodos(updatedTodos);
     };
 
     const filtersToDo = todos.filter(todo => {
@@ -122,5 +164,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
 

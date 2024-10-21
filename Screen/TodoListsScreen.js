@@ -1,110 +1,78 @@
-/* import React, { useState, useEffect, useContext } from "react";
-import { View, Text, Button, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { createTodoList } from '../js/todoList';
-import { TokenContext, UsernameContext } from '../Context/Context';
-
-export default function TodoListsScreen(props) {
-  const [todoLists, setTodoLists] = useState([]);
-  const navigation = useNavigation();
-
-
-  const [token] = useContext(TokenContext);
-  const [username] = useContext(UsernameContext)
-
-
-  const addTodoList = async () => {
-    try {
-      const title = `Liste ${todoLists.length + 1}`;
-      const newTodoList = await createTodoList(username, title, token); 
-      setTodoLists([...todoLists, newTodoList]);
-    } catch (error) {
-      setErrorMessage(error.message);
-      console.log("error API", error.message); 
-    }
-  };
-
-
-  const renderTodoList = ({ item }) => (
-    <View style={styles.listItem}>
-      <TouchableOpacity
-        onPress={() => props.navigation.navigate('Items', { todoListId: item.id, todoListName: item.content })}
-      >
-        
-
-        <Text style={styles.listTitle}>{item.title}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Liste des TodoLists</Text>
-      <FlatList
-        data={todoLists}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderTodoList}
-      />
-      <Button title="Ajouter une nouvelle TodoList" onPress={addTodoList} />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  header: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
-  },
-  listTitle: {
-    fontSize: 18,
-  },
-}); */
-
-
 import React, { useState, useContext } from "react";
-import { View, Text, Button, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createTodoList } from '../js/todoList';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TokenContext, UsernameContext } from '../Context/Context';
+import TodoList from "../components/TodoList";
 
-
-export default function TodoListsScreen(props) {
+export default function TodoListsScreen() {
   const [todoLists, setTodoLists] = useState([]);
   const navigation = useNavigation();
   const [token] = useContext(TokenContext);
   const [username] = useContext(UsernameContext);
 
-  const addTodoList = async () => {
+  useEffect(() => {
+    const loadTodoLists = async () => {
+      try {
+        const storedTodoLists = await AsyncStorage.getItem('todoLists');
+        if (storedTodoLists !== null) {
+          setTodoLists(JSON.parse(storedTodoLists));
+        }
+      } catch (error) {
+        console.log("Error loading todoLists", error);
+      }
+    };
+    loadTodoLists();
+  }, []);
+
+
+   // Persist todoLists to AsyncStorage
+   const persistTodoLists = async (updatedLists) => {
     try {
-      const title = `Liste ${todoLists.length + 1}`;
-      const newTodoList = await createTodoList(username, title, token); 
-      setTodoLists([...todoLists, newTodoList]);
+      await AsyncStorage.setItem('todoLists', JSON.stringify(updatedLists));
     } catch (error) {
-      console.log("error API", error.message); 
+      console.log("Error saving todoLists", error);
     }
   };
 
+
+  const addTodoList = async () => {
+    try {
+      const title = `Liste ${todoLists.length + 1}`;
+      const newTodoList = await createTodoList(username, title, token);
+      const updatedLists = [...todoLists, { ...newTodoList, todos: [] }];
+      setTodoLists(updatedLists);
+      persistTodoLists(updatedLists);
+    } catch (error) {
+      console.log("error API", error.message);
+    }
+  };
+
+  const deleteTodoList = (todoListsId) =>{
+     const updatedTodoList =  todoLists.filter(list => list.id != todoListsId);
+     setTodoLists(updatedTodoList);
+     persistTodoLists(updatedLists);
+  }
+
+  const editTodoListTitle = (todoListId, newTitle) => {
+    setTodoLists((todoLists) =>
+      todoLists.map((item) =>
+            item.id === todoListId ? { ...item, title: newTitle } : item
+        )
+    );
+    setTodoLists(updatedLists);
+    persistTodoLists(updatedLists);
+};
+
   const renderTodoList = ({ item }) => (
-    <View style={styles.listItem}>
-      <TouchableOpacity
-        onPress={() => props.navigation.navigate('Items', { todoListId: item.id, todoListName: item.title })}
-      >
-        <Text style={styles.listTitle}>{item.title}</Text>
-      </TouchableOpacity>
-    </View>
+    <TodoList
+      item={item}
+      todos={item.todos}  
+      navigation={navigation}  
+      deleteItem={deleteTodoList} 
+      editItem={editTodoListTitle} 
+    />
   );
 
   return (
@@ -131,19 +99,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 20,
     fontWeight: 'bold',
-  },
-  listItem: {
-    padding: 15,
-    marginBottom: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  listTitle: {
-    fontSize: 18,
   },
   addButton: {
     backgroundColor: '#28a745',

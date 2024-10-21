@@ -1,22 +1,40 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Switch, TextInput, TouchableOpacity } from 'react-native';
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, Switch, TextInput, TouchableOpacity, Image, Platform } from 'react-native';
 import { TrashIcon, PencilIcon, CheckIcon } from "react-native-heroicons/solid";
-import { launchImageLibrary } from 'react-native-image-picker';
+//import {launchImageLibrary} from 'react-native-image-picker';
+import { useState } from 'react';
 
 export default function TodoItem(props) {
     const [done, setIsEnabled] = useState(props.item.done);
     const [iconOpacity, setIconOpacity] = useState(1);
     const [editMode, setEditMode] = useState(false);
     const [editedContent, setEditedContent] = useState(props.item.content);
-    const [imageUri, setImageUri] = useState(null);
+    //const [imageUri, setImageUri] = useState(null); // To store the image URI
 
-    const selectImage = () => {
-        launchImageLibrary({}, response => {
-          if (!response.didCancel && !response.error) {
-            setImageUri(response.assets[0].uri);
+    /* const openImagePicker = () => {
+        if (Platform.OS === 'web') {
+            console.log('Image picker not supported on web');
+            return;
+        }
+
+        const options = {
+          mediaType: 'photo',
+          includeBase64: false,
+          maxHeight: 2000,
+          maxWidth: 2000,
+        };
+
+        launchImageLibrary(options, (response) => {
+          if (response.didCancel) {
+            console.log('User cancelled image picker');
+          } else if (response.error) {
+            console.log('Image picker error: ', response.error);
+          } else {
+            let imageUri = response.assets?.[0]?.uri || response.uri;
+            setImageUri(imageUri);  // Save the image URI
           }
         });
-    };
+    }; */
 
     useEffect(() => {
         setIsEnabled(props.item.done);
@@ -63,10 +81,14 @@ export default function TodoItem(props) {
             <TouchableOpacity onPress={handleIconPress} style={{ opacity: iconOpacity }}>
                 <TrashIcon />
             </TouchableOpacity>
-            <TouchableOpacity onPress={selectImage}>
-                <Text>Add Image</Text>
-            </TouchableOpacity>
-            {imageUri && <Image source={{ uri: imageUri }} style={{ width: 100, height: 100 }} />}
+            {/* {Platform.OS !== 'web' && (
+                <>
+                    <TouchableOpacity onPress={openImagePicker}>
+                        <Text>Ajouter une image</Text>
+                    </TouchableOpacity>
+                    {imageUri && <Image source={{ uri: imageUri }} style={{ width: 100, height: 100 }} />}
+                </>
+            )} */}
         </View>
     );
 }

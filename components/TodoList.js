@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { TrashIcon, PencilIcon, CheckIcon } from "react-native-heroicons/solid";
-import { Share } from 'react-native';
+import { Share, Platform } from 'react-native';
 import ProgressBar from "./progressBar.js";
 
 export default function TodoList({ item, todos = [], deleteItem, editItem, navigation }) {
@@ -24,13 +24,21 @@ export default function TodoList({ item, todos = [], deleteItem, editItem, navig
   };
 
   const shareTodoList = async () => {
-    const listContent = todos.map(item => `${item.content}: ${item.done ? 'Done' : 'Not done'}`).join('\n');
+    if (Platform.OS === "web") {
+        alert(`Ce service n'est disponible que sur Android et IOS.`);
+        return;
+    }
+
+    const listContent = todos
+        .map(item => `${item.content}: ${item.done ? 'Done' : 'Not done'}`)
+        .join('\n');
+
     try {
-      await Share.share({
-        message: `Todo List:\n${listContent}`,
-      });
+        await Share.share({
+            message: `Todo List:\n${listContent}`,
+        });
     } catch (error) {
-      console.log(error.message);
+        console.log(error.message);
     }
   };
 

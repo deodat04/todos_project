@@ -10,7 +10,6 @@ export default function TodoList({ item, todos = [], deleteItem, editItem, navig
 
   const completedTasks = todos.length > 0 ? todos.filter(item => item.done).length : 0;
   const totalTasks = todos.length;
-  const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   const handleEdit = () => {
     setIsEditing(!isEditing);
@@ -69,7 +68,7 @@ export default function TodoList({ item, todos = [], deleteItem, editItem, navig
       <ProgressBar completedTasks={completedTasks} totalTasks={totalTasks} bgcolor="#4caf50" />
 
       <TouchableOpacity onPress={shareTodoList}>
-        <Text>Share List</Text>
+        <Text>Partager TodoList</Text>
       </TouchableOpacity>
     </View>
   );

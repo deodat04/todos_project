@@ -1,8 +1,7 @@
 import React, { useState, useContext } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createTodoList } from '../js/todoList';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createTodoList, deleteTodoList } from '../js/todoList';
 import { TokenContext, UsernameContext } from '../Context/Context';
 import TodoList from "../components/TodoList";
 
@@ -12,29 +11,19 @@ export default function TodoListsScreen() {
   const [token] = useContext(TokenContext);
   const [username] = useContext(UsernameContext);
 
+//fetch when component is mount
   useEffect(() => {
-    const loadTodoLists = async () => {
-      try {
-        const storedTodoLists = await AsyncStorage.getItem('todoLists');
-        if (storedTodoLists !== null) {
-          setTodoLists(JSON.parse(storedTodoLists));
+    const fetchTodoLists = async () => {
+        try {
+            const todoListsFromApi = await getTodoLists(username, token);
+            setTodoLists(todoListsFromApi);
+        } catch (error) {
+            console.error('Error fetching todoLists:', error.message);
         }
-      } catch (error) {
-        console.log("Error loading todoLists", error);
-      }
     };
-    loadTodoLists();
-  }, []);
+    fetchTodoLists();
+}, [username, token]);
 
-
-   // Persist todoLists to AsyncStorage
-   const persistTodoLists = async (updatedLists) => {
-    try {
-      await AsyncStorage.setItem('todoLists', JSON.stringify(updatedLists));
-    } catch (error) {
-      console.log("Error saving todoLists", error);
-    }
-  };
 
 
   const addTodoList = async () => {
@@ -43,17 +32,25 @@ export default function TodoListsScreen() {
       const newTodoList = await createTodoList(username, title, token);
       const updatedLists = [...todoLists, { ...newTodoList, todos: [] }];
       setTodoLists(updatedLists);
-      persistTodoLists(updatedLists);
     } catch (error) {
       console.log("error API", error.message);
     }
   };
 
-  const deleteTodoList = (todoListsId) =>{
-     const updatedTodoList =  todoLists.filter(list => list.id != todoListsId);
-     setTodoLists(updatedTodoList);
-     persistTodoLists(updatedLists);
+  const deleteTodoList = async (id) => {
+    try {
+     const nodesDeleted =  await deleteTodoList(id, token);
+     if(nodesDeleted > 0) {
+      const updatedLists = todoLists.filter(list => list.id != id);
+      setTodoLists(updatedLists);
+     } else {
+      console.log('Error', 'Failed to delete todolist.');
+     } 
+    } catch (error) {
+      console.log("error API", error.message);
+    }
   }
+
 
   const editTodoListTitle = (todoListId, newTitle) => {
     setTodoLists((todoLists) =>
@@ -62,7 +59,6 @@ export default function TodoListsScreen() {
         )
     );
     setTodoLists(updatedLists);
-    persistTodoLists(updatedLists);
 };
 
   const renderTodoList = ({ item }) => (

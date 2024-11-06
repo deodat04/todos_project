@@ -1,9 +1,8 @@
 import React, { useState, useContext } from "react";
 import { StyleSheet, View, TextInput, Button, FlatList, Text, TouchableOpacity } from 'react-native';
 import { TokenContext } from '../Context/Context';
-import { createTodo } from '../js/todo';
+import { createTodo, updateTodo, deleteTodo, getTodos } from '../js/todo';
 import TodoItem from '../components/TodoItem';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function TodoItemScreen({ route, navigation }) {
@@ -13,39 +12,18 @@ export default function TodoItemScreen({ route, navigation }) {
     const [token] = useContext(TokenContext); 
     const [filter, setFilter] = useState('all');
 
-    // Load todos for this specific todoList from AsyncStorage
-  useEffect(() => {
-    const loadTodos = async () => {
-      try {
-        const storedTodoLists = await AsyncStorage.getItem('todoLists');
-        if (storedTodoLists !== null) {
-          const todoLists = JSON.parse(storedTodoLists);
-          const currentList = todoLists.find(list => list.id === todoListId);
-          if (currentList) {
-            setTodos(currentList.todos);
+    useEffect(() => {
+      const fetchTodos = async () => {
+          try {
+              const todosFromApi = await getTodos(todoListId, token);
+              setTodos(todosFromApi);
+          } catch (error) {
+              console.error('Error fetching todos:', error.message);
           }
-        }
-      } catch (error) {
-        console.log("Error loading todos", error);
-      }
-    };
-    loadTodos();
-  }, [todoListId]);
+      };
+      fetchTodos();
+  }, [todoListId, token]);
 
-  const persistTodos = async (updatedTodos) => {
-    try {
-      const storedTodoLists = await AsyncStorage.getItem('todoLists');
-      if (storedTodoLists !== null) {
-        const todoLists = JSON.parse(storedTodoLists);
-        const updatedTodoLists = todoLists.map(list =>
-          list.id === todoListId ? { ...list, todos: updatedTodos } : list
-        );
-        await AsyncStorage.setItem('todoLists', JSON.stringify(updatedTodoLists));
-      }
-    } catch (error) {
-      console.log("Error saving todos", error);
-    }
-  };
   
   const addNewToDo = async () => {
     if (newTextToDo.trim()) {
@@ -54,7 +32,6 @@ export default function TodoItemScreen({ route, navigation }) {
         const updatedTodos = [...todos, newTodo];
         setTodos(updatedTodos);
         setNewTextToDo('');
-        persistTodos(updatedTodos);
       } catch (error) {
         console.error('Error adding todo:', error.message);
       }
@@ -62,19 +39,36 @@ export default function TodoItemScreen({ route, navigation }) {
   };
 
     // delete todo
-    const deleteItem = (id) => {
-        const updatedTodos = todos.filter(item => item.id !== id);
-        setTodos(updatedTodos);
-        persistTodos(updatedTodos);
+    const deleteItem = async (id) => {
+      try {
+        const nodesDeleted = await deleteTodo(id, token);
+        if (nodesDeleted > 0) {
+          const updatedTodos = todos.filter(item => item.id !== id);
+          setTodos(updatedTodos);
+        } else {
+          console.log('Error', 'Failed to delete item.');
+        }
+      } catch (error) {
+          console.log('Error deleting item:', error.message);
+      }
     };
+  
 
     // Modifier un ToDo
-    const editItem = (id, newContent) => {
-        const updatedTodos = todos.map(item =>
-        item.id === id ? { ...item, content: newContent } : item
-        );
-        setTodos(updatedTodos);
-        persistTodos(updatedTodos);
+    const editItem = async (id, newContent, done) => {
+      try {
+          const updatedTodo = await updateTodo(id, done, token);
+          if (updatedTodo) {
+              const updatedTodos = todos.map(item =>
+                  item.id === id ? { ...item, content: newContent, done } : item
+              );
+              setTodos(updatedTodos);
+          } else {
+              console.log('Error updating item.');
+          }
+      } catch (error) {
+          console.log('Error updating item:', error.message);
+      }
     };
 
     const filtersToDo = todos.filter(todo => {

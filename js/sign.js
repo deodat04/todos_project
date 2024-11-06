@@ -11,8 +11,7 @@ mutation SignIn($username: String!, $password: String!) {
 const SIGN_UP = `
 mutation SignUp($username: String!, $password: String!) {
   signUp(username: $username, password: $password)
-}
-`
+}`
 
 export function signIn(username, password) {
   return fetch(API_URL, {
@@ -42,8 +41,7 @@ export function signIn(username, password) {
     })
 }
 
-
-export function signUp(username,password) {
+export function signUp(username, password) {
   return fetch(API_URL, {
     method: 'POST',
     headers: {

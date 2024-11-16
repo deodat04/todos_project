@@ -106,7 +106,7 @@ mutation UpdateTodos($where: TodoWhere, $update: TodoUpdateInput) {
     }
   }
 }`
-export function updateTodo(todoId, done, token) {
+export function updateTodo(todoId, done, content, token) {
     return fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -120,7 +120,8 @@ export function updateTodo(todoId, done, token) {
             "id": todoId
           },
           "update": {
-            "done": done
+            "done": done,
+            "content": content
           }
         }
       })

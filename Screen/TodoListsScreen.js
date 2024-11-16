@@ -1,7 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createTodoList, deleteTodoList } from '../js/todoList';
+import { createTodoList, getTodoLists, deleteTodoList} from '../js/todoList';
 import { TokenContext, UsernameContext } from '../Context/Context';
 import TodoList from "../components/TodoList";
 
@@ -11,12 +11,18 @@ export default function TodoListsScreen() {
   const [token] = useContext(TokenContext);
   const [username] = useContext(UsernameContext);
 
-//fetch when component is mount
+  //fetch when component is mount
   useEffect(() => {
     const fetchTodoLists = async () => {
         try {
             const todoListsFromApi = await getTodoLists(username, token);
-            setTodoLists(todoListsFromApi);
+            const normalizedTodoLists = todoListsFromApi.map((list) => ({
+              ...list,
+              todos: list.todos || [],
+            }));  
+            setTodoLists(normalizedTodoLists);
+            console.log('Todo list normalized', normalizedTodoLists);
+            
         } catch (error) {
             console.error('Error fetching todoLists:', error.message);
         }
@@ -30,22 +36,17 @@ export default function TodoListsScreen() {
     try {
       const title = `Liste ${todoLists.length + 1}`;
       const newTodoList = await createTodoList(username, title, token);
-      const updatedLists = [...todoLists, { ...newTodoList, todos: [] }];
-      setTodoLists(updatedLists);
+      setTodoLists([...todoLists, newTodoList]);
     } catch (error) {
       console.log("error API", error.message);
     }
   };
 
-  const deleteTodoList = async (id) => {
+  const deleteList = async (id) => {
     try {
-     const nodesDeleted =  await deleteTodoList(id, token);
-     if(nodesDeleted > 0) {
+      await deleteTodoList(id, token);
       const updatedLists = todoLists.filter(list => list.id != id);
       setTodoLists(updatedLists);
-     } else {
-      console.log('Error', 'Failed to delete todolist.');
-     } 
     } catch (error) {
       console.log("error API", error.message);
     }
@@ -58,18 +59,20 @@ export default function TodoListsScreen() {
             item.id === todoListId ? { ...item, title: newTitle } : item
         )
     );
-    setTodoLists(updatedLists);
-};
+  };
 
-  const renderTodoList = ({ item }) => (
+const renderTodoList = ({ item }) => {
+  return (
     <TodoList
       item={item}
       todos={item.todos}  
       navigation={navigation}  
-      deleteItem={deleteTodoList} 
+      deleteItem={deleteList} 
       editItem={editTodoListTitle} 
     />
   );
+};
+
 
   return (
     <View style={styles.container}>

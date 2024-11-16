@@ -1,15 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, TextInput, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { TrashIcon, PencilIcon, CheckIcon } from "react-native-heroicons/solid";
 import { Share, Platform } from 'react-native';
-import ProgressBar from "./progressBar.js";
 
 export default function TodoList({ item, todos = [], deleteItem, editItem, navigation }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(item.title);
 
-  const completedTasks = todos.length > 0 ? todos.filter(item => item.done).length : 0;
-  const totalTasks = todos.length;
 
   const handleEdit = () => {
     setIsEditing(!isEditing);
@@ -24,7 +21,7 @@ export default function TodoList({ item, todos = [], deleteItem, editItem, navig
 
   const shareTodoList = async () => {
     if (Platform.OS === "web") {
-        alert(`Ce service n'est disponible que sur Android et IOS.`);
+        alert(`Ce service n'est disponible que sur une plateforme android ou ios.`);
         return;
     }
 
@@ -56,19 +53,17 @@ export default function TodoList({ item, todos = [], deleteItem, editItem, navig
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity onPress={handleEdit}>
-          {isEditing ? <CheckIcon /> : <PencilIcon />}
+        <TouchableOpacity onPress={handleEdit} style={[styles.iconButton, styles.editIcon]}>
+          {isEditing ? <CheckIcon color="white" /> : <PencilIcon color="white" />}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleDeleteTodoList}>
-          <TrashIcon />
+        <TouchableOpacity onPress={handleDeleteTodoList} style={[styles.iconButton, styles.trashIcon]}>
+          <TrashIcon color="white" />
         </TouchableOpacity>
       </View>
 
-      <ProgressBar completedTasks={completedTasks} totalTasks={totalTasks} bgcolor="#4caf50" />
-
       <TouchableOpacity onPress={shareTodoList}>
-        <Text>Partager TodoList</Text>
+        <Text>Partager liste</Text>
       </TouchableOpacity>
     </View>
   );
@@ -99,5 +94,19 @@ const styles = StyleSheet.create({
   todoText: {
     flex: 1,
     fontSize: 16,
+  },
+  iconButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    marginHorizontal: 1,
+  },
+  editIcon: {
+    backgroundColor: '#4CAF50', 
+  },
+  trashIcon: {
+    backgroundColor: '#F44336', 
   },
 });

@@ -9,16 +9,13 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.welcomeText}>Welcome, {username}!</Text>
-            <Text style={styles.subText}>Today is {new Date().toLocaleDateString()}</Text>
+            <Text style={styles.welcomeText}>Salut, {username}!</Text>
+            <Text style={styles.subText}>Nous sommes le {new Date().toLocaleDateString()}</Text>
 
-            <View style={styles.statsContainer}>
-                <Text style={styles.statsText}>You have 5 tasks pending</Text>
-                <Text style={styles.statsText}>Tasks completed: 15</Text>
-            </View>
+        
 
             <View style={styles.buttonContainer}>
-                <Button title="Go to Todos" onPress={() => navigation.navigate("TodoLists")} />
+                <Button title="Aller aux todolists" onPress={() => navigation.navigate("TodoLists")} />
             </View>
 
             <Text style={styles.tipText}>Conseil du jour : restez organisé et abordez une tâche à la fois !</Text>

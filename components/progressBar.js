@@ -1,13 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProgressBar = ({ bgcolor, completedTasks, totalTasks }) => {
+const ProgressBar = ({ bgcolor, completedTasks = 0, totalTasks = 0 }) => {
   const completedPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  console.log(`ProgressBar props: Completed ${completedTasks}, Total ${totalTasks}`);
 
   return (
     <View style={styles.container}>
       <View style={[styles.filler, { width: `${completedPercentage}%`, backgroundColor: bgcolor }]} />
-      <Text style={styles.label}>{`${completedTasks} of ${totalTasks} tâches completées`}</Text>
+      <Text style={styles.label}>{`${completedTasks} sur ${totalTasks} tâches completées`}</Text>
     </View>
   );
 };
